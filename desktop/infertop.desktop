@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=infertop
+GenericName=GPU Process Monitor
+Type=Application
+Terminal=true
+Exec=infertop
+Icon=infertop
+Categories=System;Monitor;
+X-AppImage-Integrate=false
+
