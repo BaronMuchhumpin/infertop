@@ -44,6 +44,36 @@ cluster-specific bits are environment variables:
 | `INFERTOP_ROCM_SYSTEMRAM` | on | set `0` to disable system-RAM-as-device-memory on integrated GPUs |
 | `INFERTOP_IMG_STATUS` | `~/.local/share/infertop/img_status` | legend-only image-gen job status file (empty disables) |
 
+Request-history CSV recorder
+----------------------------
+
+While infertop runs, it appends one row per inference event to
+`~/.local/share/infertop/llama_records.csv` (override path with
+`INFERTOP_RECORD_CSV`; empty string or `--nocsv` disables). Append-only,
+created with a header on first write:
+
+```
+unix_ts,iso,host,port,pid,slot,task,event,prompt_tok,gen_tok,pp_tps,tg_tps,accept,mean_len,depth_tok,mem_avail_mib,swap_free_mib
+```
+
+| Column | Meaning |
+|---|---|
+| `unix_ts`, `iso` | sample time (epoch seconds, ISO-8601 local) |
+| `host`, `port`, `pid` | which engine server the row came from |
+| `slot`, `task` | llama.cpp slot and monotonically increasing task id — group rows of one request by `(slot, task)` |
+| `event` | `prefill` (prompt processed), `progress` (3 s timing tick), `taskdone` (request finished), `accept` (spec-decode draft acceptance) |
+| `prompt_tok`, `gen_tok` | prompt / generated token counts for the event |
+| `pp_tps`, `tg_tps` | prefill rate (prompt eval) and decode rate (generation), tokens/s |
+| `accept`, `mean_len` | speculative-decode draft acceptance rate and mean accepted length |
+| `depth_tok` | context depth at the event (prompt + generated tokens) |
+| `mem_avail_mib`, `swap_free_mib` | system memory pressure at sample time |
+
+Empty cells mean the event did not carry that metric. Typical request: one
+`prefill` row, zero or more `progress` rows, one `accept` row when spec-decode
+is active, and a final `taskdone` row. The recorder is what powers offline
+weekly/period analysis (throughput distributions, cache-hit trends, memory
+pressure correlation).
+
 Building
 --------
 
