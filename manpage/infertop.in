@@ -8,7 +8,7 @@ infertop \- interactive GPU process viewer
 
 .SH SYNOPSIS
 .B infertop
-\fR[\fB\-hvCfpPris\fR]
+\fR[\fB\-hvCfpPrisM\fR]
 \fR[\fB\-d\fR \fIdelay\fR]
 \fR[\fB\-c\fR \fIconfig-file\fR]
 \fR[\fB\-E\fR \fIseconds\fR]
@@ -56,6 +56,10 @@ This section deals with the devices display (top of the interface). You can \fBs
 This section deals with the line plots (middle of the interface). You can \fBreverse the plot direction\fR and \fBselect which metric is being shown in the plots\fR.
 .TP
 Infertop adds two extra plottable metrics: \fBtokensPerSec\fR (decode rate) and \fBprefillPerSec\fR (prompt-processing rate). Both plot on the graph's absolute axis: a value of 25 t/s is drawn at 25 on the left axis, clipped above 100. Together they show the live token throughput of all llama.cpp \fBllama-server\fR processes detected on the machine. Servers started with \fB\-\-metrics\fR are polled over their Prometheus endpoint; servers without it are tracked by tailing their log file (discovered via /proc fd inspection) for slot timing lines. During prompt processing, when the server has not logged any rate yet, both legends read \fIprefilling\&.\&.\&.\fR; when no server is generating, \fIidle\fR; when no server is found at all, \fIN/A\fR.
+
+.TP
+.BR \-M ", " \-\-cpumem
+Add two host\-system lines to the plot: \fBcpu %%\fR (aggregate CPU utilization from \fI/proc/stat\fR) and \fBmem %%\fR ((MemTotal \minus MemAvailable)/MemTotal from \fI/proc/meminfo\fR). Upstream nvtop dropped CPU monitoring in 3.0; this restores it as an opt\-in. The lines plot on the first device and can also be toggled per\-device from the setup window (F2) under Chart Options.
 .TP
 .I Processes
 This section deals with the process list (bottom of the interface). You can \fBselect the sort order\fR, \fBselect the metric by which to sort the processes by\fR and \fBselect which metric is displayed\fR.

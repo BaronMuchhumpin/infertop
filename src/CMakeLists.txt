@@ -13,6 +13,7 @@ add_executable(infertop
   interface_setup_win.c
   interface_ring_buffer.c
   extract_gpuinfo.c
+  extract_cpumeminfo.c
   llama_metrics.c
   time.c
   plot.c

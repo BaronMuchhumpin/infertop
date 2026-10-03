@@ -17,6 +17,7 @@ infertop understands the inference engine sitting on the GPU:
   container log when no `/metrics` endpoint exists
 * **Request-history CSV recorder** (depth-tagged rows: prefill, progress,
   task-done, accept) for offline analysis; disable with `--nocsv`
+* **Host CPU + memory lines** (): aggregate CPU% and RAM% plotted alongside the GPU — a feature upstream nvtop removed in 3.0
 * **Integrated-GPU honesty**: on APUs (e.g. ROCm gfx1151) where engines pin host
   RAM through `/dev/kfd`, system RAM is reported as device memory so the memory
   plot matches reality

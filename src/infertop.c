@@ -78,7 +78,8 @@ static const char helpstring[] = "Available options:\n"
                                  "  -s --snapshot     : Output the current gpu stats without ncurses"
                                  "(useful for scripting)\n"
                                  "  -l --loop         : Output the current gpu stats without ncurses in a loop\n"
-                                 "  -X --nocsv        : Disable the request-history CSV recorder\n";
+                                 "  -X --nocsv        : Disable the request-history CSV recorder\n"
+                                 "  -M --cpumem       : Add host CPU and memory usage lines to the plot\n";
 
 static const char versionString[] = "infertop version " NVTOP_VERSION_STRING;
 
@@ -98,10 +99,11 @@ static const struct option long_opts[] = {
     {.name = "snapshot", .has_arg = no_argument, .flag = NULL, .val = 's'},
     {.name = "loop", .has_arg = no_argument, .flag = NULL, .val = 'l'},
     {.name = "nocsv", .has_arg = no_argument, .flag = NULL, .val = 'X'},
+    {.name = "cpumem", .has_arg = no_argument, .flag = NULL, .val = 'M'},
     {0, 0, 0, 0},
 };
 
-static const char opts[] = "hvd:c:CfE:pPrislX";
+static const char opts[] = "hvd:c:CfE:pPrislXM";
 
 int main(int argc, char **argv) {
   (void)setlocale(LC_CTYPE, "");
@@ -117,6 +119,7 @@ int main(int argc, char **argv) {
   bool encode_decode_timer_option_set = false;
   bool show_gpu_info_bar = false;
   bool show_snapshot = false;
+  bool cpumem_option = false;
   bool loop_snapshot = false;
   double encode_decode_hide_time = -1.;
   char *custom_config_file_path = NULL;
@@ -186,6 +189,9 @@ int main(int argc, char **argv) {
       break;
     case 'X':
       setenv("INFERTOP_RECORD_CSV", "", 1);
+      break;
+    case 'M':
+      cpumem_option = true;
       break;
       break;
     case ':':
@@ -287,6 +293,12 @@ int main(int argc, char **argv) {
       allDevicesOptions.gpu_specific_opts[i].to_draw =
           plot_remove_draw_info(plot_information_count, allDevicesOptions.gpu_specific_opts[i].to_draw);
     }
+  }
+  if (cpumem_option && allDevCount > 0) {
+    allDevicesOptions.gpu_specific_opts[0].to_draw =
+        plot_add_draw_info(plot_cpu_rate, allDevicesOptions.gpu_specific_opts[0].to_draw);
+    allDevicesOptions.gpu_specific_opts[0].to_draw =
+        plot_add_draw_info(plot_mem_rate, allDevicesOptions.gpu_specific_opts[0].to_draw);
   }
   if (!process_is_field_displayed(process_field_count, allDevicesOptions.process_fields_displayed)) {
     allDevicesOptions.process_fields_displayed = process_default_displayed_field();

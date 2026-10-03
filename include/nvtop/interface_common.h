@@ -35,6 +35,8 @@ enum plot_information {
   plot_effective_load_rate,
   plot_tokens_per_sec,
   plot_prefill_per_sec,
+  plot_cpu_rate,
+  plot_mem_rate,
   plot_information_count
 };
 

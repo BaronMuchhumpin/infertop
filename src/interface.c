@@ -29,6 +29,7 @@
 #include "nvtop/interface_ring_buffer.h"
 #include "nvtop/interface_setup_win.h"
 #include "nvtop/llama_metrics.h"
+#include "nvtop/extract_cpumeminfo.h"
 #include "nvtop/plot.h"
 #include "nvtop/time.h"
 
@@ -1681,6 +1682,8 @@ static void draw_shortcuts(struct nvtop_interface *interface) {
 void save_current_data_to_ring(struct list_head *devices, struct nvtop_interface *interface) {
   struct gpu_info *device;
   unsigned dev_id = 0;
+  unsigned cpumem_cpu = 0, cpumem_mem = 0;
+  cpumem_sample(&cpumem_cpu, &cpumem_mem); // once per refresh; plotted on device 0
 
   list_for_each_entry(device, devices, list) {
     unsigned data_index = 0;
@@ -1761,6 +1764,14 @@ void save_current_data_to_ring(struct list_head *devices, struct nvtop_interface
           }
           break;
         }
+        case plot_cpu_rate:
+          if (dev_id == 0)
+            data_val = cpumem_cpu;
+          break;
+        case plot_mem_rate:
+          if (dev_id == 0)
+            data_val = cpumem_mem;
+          break;
         case plot_information_count:
           break;
         }
@@ -1872,6 +1883,12 @@ static unsigned populate_plot_data_from_ring_buffer(const struct nvtop_interface
           }
           break;
         }
+        case plot_cpu_rate:
+          snprintf(plot_legend[in_processing], PLOT_MAX_LEGEND_SIZE, "cpu %%");
+          break;
+        case plot_mem_rate:
+          snprintf(plot_legend[in_processing], PLOT_MAX_LEGEND_SIZE, "mem %%");
+          break;
         case plot_information_count:
           break;
         }
