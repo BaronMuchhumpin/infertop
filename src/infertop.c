@@ -78,8 +78,9 @@ static const char helpstring[] = "Available options:\n"
                                  "  -s --snapshot     : Output the current gpu stats without ncurses"
                                  "(useful for scripting)\n"
                                  "  -l --loop         : Output the current gpu stats without ncurses in a loop\n"
-                                 "  -X --nocsv        : Disable the request-history CSV recorder\n"
-                                 "  -M --cpumem       : Add host CPU and memory usage lines to the plot\n";
+                                  "  -X --nocsv        : Disable the request-history CSV recorder\n"
+                                  "  -R --record-only  : Run the CSV recorder headless (no ncurses)\n"
+                                  "  -M --cpumem       : Add host CPU and memory usage lines to the plot\n";
 
 static const char versionString[] = "infertop version " NVTOP_VERSION_STRING;
 
@@ -99,11 +100,12 @@ static const struct option long_opts[] = {
     {.name = "snapshot", .has_arg = no_argument, .flag = NULL, .val = 's'},
     {.name = "loop", .has_arg = no_argument, .flag = NULL, .val = 'l'},
     {.name = "nocsv", .has_arg = no_argument, .flag = NULL, .val = 'X'},
+    {.name = "record-only", .has_arg = no_argument, .flag = NULL, .val = 'R'},
     {.name = "cpumem", .has_arg = no_argument, .flag = NULL, .val = 'M'},
     {0, 0, 0, 0},
 };
 
-static const char opts[] = "hvd:c:CfE:pPrislXM";
+static const char opts[] = "hvd:c:CfE:pPrislXRM";
 
 int main(int argc, char **argv) {
   (void)setlocale(LC_CTYPE, "");
@@ -119,6 +121,7 @@ int main(int argc, char **argv) {
   bool encode_decode_timer_option_set = false;
   bool show_gpu_info_bar = false;
   bool show_snapshot = false;
+  bool record_only_option = false;
   bool cpumem_option = false;
   bool loop_snapshot = false;
   double encode_decode_hide_time = -1.;
@@ -190,6 +193,9 @@ int main(int argc, char **argv) {
     case 'X':
       setenv("INFERTOP_RECORD_CSV", "", 1);
       break;
+    case 'R':
+      record_only_option = true;
+      break;
     case 'M':
       cpumem_option = true;
       break;
@@ -221,6 +227,10 @@ int main(int argc, char **argv) {
     perror("Impossible to set signal handler for SIGINT: ");
     exit(EXIT_FAILURE);
   }
+  if (sigaction(SIGTERM, &siga, NULL) != 0) {
+    perror("Impossible to set signal handler for SIGTERM: ");
+    exit(EXIT_FAILURE);
+  }
   if (sigaction(SIGQUIT, &siga, NULL) != 0) {
     perror("Impossible to set signal handler for SIGQUIT: ");
     exit(EXIT_FAILURE);
@@ -243,6 +253,20 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   if (allDevCount == 0) {
     fprintf(stdout, "No GPU to monitor.\n");
+    return EXIT_SUCCESS;
+  }
+
+  if (record_only_option) {
+    gpuinfo_populate_static_infos(&monitoredGpus);
+    if (!update_interval_option_set)
+      update_interval_option = 2000;
+    while (!signal_exit) {
+      llama_metrics_refresh(&monitoredGpus);
+      struct timespec tv = {.tv_sec = update_interval_option / 1000,
+                            .tv_nsec = (update_interval_option % 1000) * 1000000};
+      nanosleep(&tv, NULL);
+    }
+    gpuinfo_shutdown_info_extraction(&monitoredGpus);
     return EXIT_SUCCESS;
   }
 
